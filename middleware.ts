@@ -37,27 +37,43 @@ export default async function middleware(request: Request) {
   };
 
   // Only include body for methods that allow it
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
+  if (request.method !== 'GET' && request.method !== 'HEAD' && request.body) {
     requestInit.body = request.body;
+    // Edge runtime and Node 18+ require duplex: 'half' when the body is a ReadableStream
+    (requestInit as any).duplex = 'half';
   }
 
-  if (isAiBot) {
-    // Rewrite the request to the internal AI delivery API
-    const originalUrl = url.toString();
-    url.pathname = '/api/ai-delivery';
+  try {
+    if (isAiBot) {
+      // Rewrite the request to the internal AI delivery API
+      const originalUrl = url.toString();
+      url.pathname = '/api/ai-delivery';
+      
+      const newHeaders = new Headers(request.headers);
+      newHeaders.set('x-original-url', originalUrl);
+      requestInit.headers = newHeaders;
+
+      return await fetch(url.toString(), requestInit);
+    }
+
+    // Normal User Logic
+    // Seamlessly proxy/rewrite the request to the client's original origin server
+    const host = request.headers.get('host') || '';
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    const baseUrl = `${protocol}://${host}`;
     
-    const newHeaders = new Headers(request.headers);
-    newHeaders.set('x-original-url', originalUrl);
-    requestInit.headers = newHeaders;
+    // Fetch actual origin for this domain
+    const originLookup = await fetch(`${baseUrl}/api/get-origin?domain=${encodeURIComponent(host)}`);
+    if (!originLookup.ok) {
+      return new Response('Client domain not found', { status: 404 });
+    }
+    const { origin: clientOriginalOrigin } = await originLookup.json();
 
-    return fetch(url.toString(), requestInit);
+    const proxyUrl = new URL(url.pathname + url.search, clientOriginalOrigin);
+
+    return await fetch(proxyUrl.toString(), requestInit);
+  } catch (err) {
+    console.error('Middleware proxy error:', err);
+    return new Response('Edge Proxy Error', { status: 500 });
   }
-
-  // Normal User Logic
-  // Seamlessly proxy/rewrite the request to the client's original origin server
-  // Placeholder for the client's original origin resolution
-  const clientOriginalOrigin = 'https://client-original-origin.com'; 
-  const proxyUrl = new URL(url.pathname + url.search, clientOriginalOrigin);
-
-  return fetch(proxyUrl.toString(), requestInit);
 }

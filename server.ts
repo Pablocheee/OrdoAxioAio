@@ -155,6 +155,35 @@ ${JSON.stringify(dataVoids, null, 2)}`;
     }
   });
 
+  // Origin Resolution Endpoint
+  app.get("/api/get-origin", async (req, res) => {
+    try {
+      const domain = req.query.domain as string;
+      if (!domain) {
+        return res.status(400).json({ error: "Missing domain parameter" });
+      }
+
+      const projectsSnapshot = await db.collection("projects").where("active_domain", "==", domain).limit(1).get();
+      if (projectsSnapshot.empty) {
+        return res.status(404).json({ error: "Origin not found" });
+      }
+
+      const projectData = projectsSnapshot.docs[0].data();
+      // Ensure we have a valid URL for the origin
+      const originUrl = projectData.project_url;
+      if (!originUrl) {
+        return res.status(404).json({ error: "Origin URL not set" });
+      }
+
+      // We cache this heavily since domain mappings rarely change
+      res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate");
+      res.json({ success: true, origin: originUrl });
+    } catch (error: any) {
+      console.error("Origin lookup error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // Vercel Serverless Scraper Endpoint (Simulated)
   app.post("/api/ingest", async (req, res) => {
     try {

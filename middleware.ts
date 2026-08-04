@@ -64,9 +64,12 @@ export default async function middleware(request: Request) {
     
     // Fetch actual origin for this domain
     const originLookup = await fetch(`${baseUrl}/api/get-origin?domain=${encodeURIComponent(host)}`);
-    if (!originLookup.ok) {
+    const contentType = originLookup.headers.get('content-type') || '';
+    
+    if (!originLookup.ok || !contentType.includes('application/json')) {
       return new Response('Client domain not found', { status: 404 });
     }
+    
     const { origin: clientOriginalOrigin } = await originLookup.json();
 
     const proxyUrl = new URL(url.pathname + url.search, clientOriginalOrigin);

@@ -1,0 +1,47 @@
+/* === START: PRODUCT_STYLES === */
+.node-meta {
+    font-family: monospace;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    display: block;
+    margin-bottom: 10px;
+}
+
+h3 { font-size: 1.8rem; margin-bottom: 12px; }
+
+.product-info h4, .stack-list h4 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    letter-spacing: 0.1em;
+}
+
+.product-info p {
+    font-size: 0.9rem;
+    color: #bbb;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.tags { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tags span {
+    font-size: 0.7rem;
+    background: rgba(255,255,255,0.05);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.btn-expand {
+    background: none;
+    border: none;
+    color: #fff;
+    text-decoration: underline;
+    font-size: 0.8rem;
+    margin-top: 24px;
+    cursor: pointer;
+    padding: 0;
+}
+/* === END: PRODUCT_STYLES === */

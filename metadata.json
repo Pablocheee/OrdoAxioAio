@@ -1,0 +1,6 @@
+{
+  "name": "Ordo Axio",
+  "description": "High-Priority Geo Systems",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

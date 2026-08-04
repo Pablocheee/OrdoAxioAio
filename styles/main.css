@@ -1,0 +1,20 @@
+/* === START: MAIN_STYLE === */
+:root {
+    --bg: #0a0a0a;
+    --accent: #00ff41;
+}
+
+body {
+    background-color: var(--bg) !important;
+    color: var(--accent) !important;
+    margin: 0;
+    padding: 20px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.catalog {
+    display: grid;
+    gap: 20px;
+    margin-top: 40px;
+}
+/* === END: MAIN_STYLE === */

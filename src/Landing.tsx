@@ -70,15 +70,15 @@ const Landing: React.FC = () => {
                 <div className="section-label">Как это работает</div>
                 <section className="steps-container">
                     <div className="step-item">
-                        <div className="step-icon">1</div>
+                        <div className="step-icon">01</div>
                         <div className="step-text">Наш <b>Vercel Serverless бэкенд</b> непрерывно анализирует рынок, чтобы находить «Data Voids» (низкоконкурентные запросы).</div>
                     </div>
                     <div className="step-item">
-                        <div className="step-icon">2</div>
+                        <div className="step-icon">02</div>
                         <div className="step-text">Система автоматически выстраивает <b>машиночитаемую архитектуру и JSON-LD микроразметку</b>, надежно сохраняя все активы в Firebase (Firestore).</div>
                     </div>
                     <div className="step-item">
-                        <div className="step-icon">3</div>
+                        <div className="step-icon">03</div>
                         <div className="step-text">Структурированные данные гарантируют <b>высокую индексацию и приоритетные рекомендации</b> в ChatGPT, Perplexity, Gemini, Алисе и GigaChat.</div>
                     </div>
                 </section>

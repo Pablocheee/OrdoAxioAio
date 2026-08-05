@@ -96,7 +96,13 @@ const AdminDashboard: React.FC = () => {
         },
         body: JSON.stringify({ targetUrl: newProjectUrl })
       })
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Ошибка сервера: ${res.status} - ${text.substring(0, 50)}`);
+        }
+        return res.json();
+      })
       .then(async (result) => {
         if (result.success) {
            await addDoc(collection(db, 'raw_client_data'), {
@@ -106,12 +112,15 @@ const AdminDashboard: React.FC = () => {
            });
            await updateDoc(docRef, { status: 'analyzing' });
         } else {
+           console.error('Ошибка парсинга:', result.error);
            await updateDoc(docRef, { status: 'ingestion_failed' });
+           alert(`Ошибка сбора данных: ${result.error || 'Неизвестная ошибка'}`);
         }
       })
       .catch(async (err) => {
         console.error('Ошибка триггера парсера:', err);
         await updateDoc(docRef, { status: 'ingestion_failed' });
+        alert(`Сетевая ошибка или сбой API: ${err.message}`);
       });
 
     } catch (err) {

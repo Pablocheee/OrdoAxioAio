@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `;
 
     // 3. Отправляем запрос к модели Gemini 1.5 Flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
     const result = await model.generateContent(prompt);
     const aiReport = result.response.text();
 

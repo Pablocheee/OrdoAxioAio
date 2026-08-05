@@ -17,6 +17,10 @@ const db = getFirestore();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
     const domain = req.query.domain as string;
     if (!domain) {
       return res.status(400).json({ error: "Missing domain parameter" });

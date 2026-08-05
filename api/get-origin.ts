@@ -37,9 +37,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // We cache this heavily since domain mappings rarely change
     res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate");
-    res.status(200).json({ success: true, origin: originUrl });
+    return res.status(200).json({ success: true, origin: originUrl });
   } catch (error: any) {
     console.error("Origin lookup error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 }

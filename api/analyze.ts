@@ -24,12 +24,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Инициализируем Firebase Admin SDK, если он еще не инициализирован
     if (!getApps().length) {
+      let formattedKey = privateKey.trim();
+      if (formattedKey.startsWith('"') && formattedKey.endsWith('"')) {
+        formattedKey = formattedKey.slice(1, -1);
+      }
+      formattedKey = formattedKey.replace(/\\n/g, '\n');
+
       initializeApp({
         credential: cert({
           projectId: projectId,
           clientEmail: clientEmail,
-          // Заменяем экранированные переносы строк, если они пришли из Vercel Environment Variables
-          privateKey: privateKey.replace(/\\n/g, '\n'),
+          privateKey: formattedKey,
         }),
       });
     }

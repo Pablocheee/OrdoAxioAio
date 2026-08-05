@@ -1,15 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeApp, getApps } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import * as admin from 'firebase-admin';
 
 // Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  initializeApp({
-    projectId: "gen-lang-client-0081841990"
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
   });
 }
-const db = getFirestore();
-db.settings({ databaseId: "ai-studio-coresync-baee7ba7-0afe-4299-b2c0-9fb2e8b42140" });
+const db = admin.firestore();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

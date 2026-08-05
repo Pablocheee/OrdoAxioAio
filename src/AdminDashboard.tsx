@@ -111,6 +111,31 @@ const AdminDashboard: React.FC = () => {
              createdAt: serverTimestamp()
            });
            await updateDoc(docRef, { status: 'analyzing' });
+
+           // --- ЗАПУСК АНАЛИЗА GEMINI ---
+           fetch('/api/analyze', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ projectId: docRef.id })
+           })
+           .then(async analyzeRes => {
+             if (!analyzeRes.ok) throw new Error('Сбой API анализатора');
+             return analyzeRes.json();
+           })
+           .then(async analyzeData => {
+             if (analyzeData.success) {
+               alert('Анализ завершен успешно!');
+             } else {
+               await updateDoc(docRef, { status: 'analysis_failed' });
+               alert(`Ошибка нейросети: ${analyzeData.error}`);
+             }
+           })
+           .catch(async analyzeErr => {
+             console.error('Ошибка вызова Gemini:', analyzeErr);
+             await updateDoc(docRef, { status: 'analysis_failed' });
+             alert(`Ошибка нейросети: ${analyzeErr.message}`);
+           });
+           // --- КОНЕЦ БЛОКА АНАЛИЗА ---
         } else {
            console.error('Ошибка парсинга:', result.error);
            await updateDoc(docRef, { status: 'ingestion_failed' });

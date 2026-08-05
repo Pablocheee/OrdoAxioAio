@@ -3,35 +3,48 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Инициализируем Firebase Admin SDK, если он еще не инициализирован
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      // Заменяем экранированные переносы строк, если они пришли из Vercel Environment Variables
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-}
-
-const db = getFirestore();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Метод не поддерживается (Method not allowed)' });
+  }
+
+  const projectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.VITE_FIREBASE_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.VITE_FIREBASE_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY;
+  const geminiApiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+
+  if (!projectId || !clientEmail || !privateKey) {
+    return res.status(500).json({ error: 'Ошибка сервера: Отсутствуют ключи конфигурации Firebase Admin' });
+  }
+
+  if (!geminiApiKey) {
+    return res.status(500).json({ error: 'Ошибка сервера: Отсутствует ключ конфигурации GEMINI_API_KEY' });
   }
 
   try {
-    const { projectId } = req.body;
+    // Инициализируем Firebase Admin SDK, если он еще не инициализирован
+    if (!getApps().length) {
+      initializeApp({
+        credential: cert({
+          projectId: projectId,
+          clientEmail: clientEmail,
+          // Заменяем экранированные переносы строк, если они пришли из Vercel Environment Variables
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+        }),
+      });
+    }
+
+    const db = getFirestore();
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+
+    const targetProjectId = req.body.projectId;
     
-    if (!projectId) {
+    if (!targetProjectId) {
       return res.status(400).json({ error: 'Missing projectId' });
     }
 
     // 1. Получаем сырые данные с сайта клиента из коллекции raw_client_data
-    const rawDataSnapshot = await db.collection('raw_client_data').where('projectId', '==', projectId).limit(1).get();
+    const rawDataSnapshot = await db.collection('raw_client_data').where('projectId', '==', targetProjectId).limit(1).get();
     
     if (rawDataSnapshot.empty) {
       return res.status(404).json({ error: 'Сырые данные не найдены' });
@@ -61,13 +74,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 4. Сохраняем результат анализа в отдельную коллекцию ai_analysis
     await db.collection('ai_analysis').add({
-      projectId,
+      projectId: targetProjectId,
       report: aiReport,
       createdAt: new Date().toISOString()
     });
 
     // 5. Обновляем статус основного проекта
-    await db.collection('projects').doc(projectId).update({
+    await db.collection('projects').doc(targetProjectId).update({
       status: 'completed',
       updatedAt: new Date().toISOString()
     });

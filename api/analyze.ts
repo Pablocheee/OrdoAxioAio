@@ -72,8 +72,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       Сформируйте структурированный аналитический отчет (до 1500 символов). Выделите сильные стороны и найдите "Data Voids" (слепые зоны) — низкоконкурентные запросы, на которые сайту стоит дать машиночитаемые ответы для поисковиков и ИИ-агентов.
     `;
 
-    // 3. Отправляем запрос к модели Gemini 2.5 Flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    // 3. Отправляем запрос к модели Gemini 3.6 Flash
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
     const result = await model.generateContent(prompt);
     const aiReport = result.response.text();
 

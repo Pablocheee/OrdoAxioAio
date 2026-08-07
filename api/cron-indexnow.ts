@@ -57,9 +57,11 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         if (!groupedAssets.has(clientId)) {
           groupedAssets.set(clientId, { docRefs: [], urls: [] });
         }
-        const group = groupedAssets.get(clientId)!;
-        group.docRefs.push(doc.ref);
-        group.urls.push(url);
+        const group = groupedAssets.get(clientId);
+        if (group) {
+          group.docRefs.push(doc.ref);
+          group.urls.push(url);
+        }
       }
     });
 
@@ -105,12 +107,12 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         const payload = {
           host: host,
           key: indexNowKey,
-          keyLocation: \`https://\${host}/\${indexNowKey}.txt\`,
+          keyLocation: `https://${host}/${indexNowKey}.txt`,
           urlList: group.urls
         };
 
         // 5. Отправка POST-запроса в IndexNow
-        console.log(\`[IndexNow] Отправка \${group.urls.length} URL для домена \${host}...\`);
+        console.log(`[IndexNow] Отправка ${group.urls.length} URL для домена ${host}...`);
         const response = await fetch('https://api.indexnow.org/indexnow', {
           method: 'POST',
           headers: {
@@ -123,13 +125,13 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         if (!response.ok) {
           // Если ошибка сервера или превышение лимитов, пропускаем обновление БД для этого пакета,
           // оставляя needs_indexnow_ping = true для следующей попытки
-          console.error(\`[IndexNow] Ошибка API для \${host}: \${response.status} \${response.statusText}\`);
-          results.push({ clientId, status: 'error', error: \`\${response.status} \${response.statusText}\` });
+          console.error(`[IndexNow] Ошибка API для ${host}: ${response.status} ${response.statusText}`);
+          results.push({ clientId, status: 'error', error: `${response.status} ${response.statusText}` });
           continue;
         }
 
         // 7. Подготовка пакетного обновления в БД в случае успеха (200 OK)
-        console.log(\`[IndexNow] Успешный пинг для \${host}. Обработано \${group.urls.length} ссылок.\`);
+        console.log(`[IndexNow] Успешный пинг для ${host}. Обработано ${group.urls.length} ссылок.`);
         const now = new Date().toISOString();
         
         group.docRefs.forEach(ref => {
@@ -143,7 +145,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
 
       } catch (clientError: any) {
         // Изолированная обработка ошибок для отдельного клиента, чтобы не прерывать весь крон
-        console.error(\`[IndexNow] Внутренняя ошибка при обработке клиента \${clientId}:\`, clientError.message);
+        console.error(`[IndexNow] Внутренняя ошибка при обработке клиента ${clientId}:`, clientError.message);
         results.push({ clientId, status: 'error', error: clientError.message });
       }
     }

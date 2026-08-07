@@ -1,12 +1,12 @@
 {
-  "rewrites": [
+  "crons": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "path": "/api/cron-sync",
+      "schedule": "0 0 * * *"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "path": "/api/analyze",
+      "schedule": "30 0 * * *"
     }
   ]
 }

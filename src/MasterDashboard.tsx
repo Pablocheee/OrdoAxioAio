@@ -14,6 +14,7 @@ interface ClientFeatureToggles {
   isParserEnabled: boolean;
   isAiGenerationEnabled: boolean;
   isAiRoutingEnabled: boolean;
+  isFastIndexingEnabled: boolean;
 }
 
 /**
@@ -95,6 +96,7 @@ export default function MasterDashboard() {
             isParserEnabled: data.features?.isParserEnabled || false,
             isAiGenerationEnabled: data.features?.isAiGenerationEnabled || false,
             isAiRoutingEnabled: data.features?.isAiRoutingEnabled || false,
+            isFastIndexingEnabled: data.features?.isFastIndexingEnabled || false,
           }
         });
       });
@@ -127,6 +129,7 @@ export default function MasterDashboard() {
           isParserEnabled: false,
           isAiGenerationEnabled: false,
           isAiRoutingEnabled: false,
+          isFastIndexingEnabled: false,
         }
       };
 
@@ -260,6 +263,11 @@ export default function MasterDashboard() {
                           label="ИИ Маршрутизация (AI Routing)"
                           checked={client.features.isAiRoutingEnabled}
                           onChange={() => handleToggleFeature(client.id, 'isAiRoutingEnabled')}
+                        />
+                        <MinimalToggle
+                          label="Быстрая индексация (IndexNow)"
+                          checked={client.features.isFastIndexingEnabled}
+                          onChange={() => handleToggleFeature(client.id, 'isFastIndexingEnabled')}
                         />
                       </div>
                     </td>

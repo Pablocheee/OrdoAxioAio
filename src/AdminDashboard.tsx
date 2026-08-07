@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, onSnapshot, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -8,10 +8,11 @@ interface Project {
   client_id: string;
   project_url: string;
   status: string;
+  business_type?: string;
   createdAt: any;
 }
 
-const AdminDashboard: React.FC = () => {
+export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState('ordoaxio@gmail.com');
   const [password, setPassword] = useState('Bos20199320');
@@ -20,7 +21,9 @@ const AdminDashboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [newClientId, setNewClientId] = useState('');
   const [newProjectUrl, setNewProjectUrl] = useState('');
+  const [newBusinessType, setNewBusinessType] = useState('ecommerce');
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -74,6 +77,15 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleCopyScript = (projectId: string, clientId: string) => {
+    const scriptTag = `<script src="https://ordoaxio.vercel.app/assets/injector.js?clientId=${clientId}" async></script>`;
+    navigator.clipboard.writeText(scriptTag);
+    setCopiedId(projectId);
+    setTimeout(() => {
+      setCopiedId(null);
+    }, 2000);
+  };
+
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClientId || !newProjectUrl) return;
@@ -83,11 +95,13 @@ const AdminDashboard: React.FC = () => {
       const docRef = await addDoc(collection(db, 'projects'), {
         client_id: newClientId,
         project_url: newProjectUrl,
+        business_type: newBusinessType,
         status: 'pending_ingestion',
         createdAt: serverTimestamp()
       });
       setNewClientId('');
       setNewProjectUrl('');
+      setNewBusinessType('ecommerce');
       
       fetch('/api/ingest', {
         method: 'POST',
@@ -169,50 +183,28 @@ const AdminDashboard: React.FC = () => {
 
   if (!user) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'var(--bg-main)',
-        color: 'var(--text-primary)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        fontFamily: 'var(--font-main)'
-      }}>
-        <div style={{
-          background: 'var(--card-bg)',
-          border: '1px solid var(--card-border)',
-          borderRadius: '16px',
-          padding: '40px',
-          width: '100%',
-          maxWidth: '400px'
-        }}>
-          <h1 style={{ fontSize: '1.5rem', marginBottom: '20px', textAlign: 'center' }}>Control Room</h1>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <div className="min-h-screen bg-[#040a18] text-gray-200 flex items-center justify-center p-5 font-sans">
+        <div className="bg-[#0a1224] border border-gray-800 rounded-none p-10 w-full max-w-md shadow-2xl">
+          <h1 className="text-xl font-medium mb-6 text-center text-white tracking-widest uppercase">Secret Command Center</h1>
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
-              style={{
-                padding: '12px', borderRadius: '8px', border: '1px solid var(--card-border)',
-                background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', outline: 'none'
-              }}
+              className="px-4 py-3 bg-[#040a18] border border-gray-800 text-gray-200 outline-none focus:border-blue-500/50 transition-colors rounded-none"
             />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Пароль"
-              style={{
-                padding: '12px', borderRadius: '8px', border: '1px solid var(--card-border)',
-                background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', outline: 'none'
-              }}
+              className="px-4 py-3 bg-[#040a18] border border-gray-800 text-gray-200 outline-none focus:border-blue-500/50 transition-colors rounded-none"
             />
-            <button type="submit" className="btn-metal" style={{ border: 'none', cursor: 'pointer', marginTop: '10px' }}>
+            <button type="submit" className="mt-2 px-6 py-3 bg-blue-600/10 text-blue-400 border border-blue-900/50 hover:bg-blue-600/20 hover:border-blue-700 transition-all uppercase tracking-widest text-sm font-medium rounded-none">
               Войти
             </button>
-            {error && <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>{error}</p>}
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           </form>
         </div>
       </div>
@@ -220,126 +212,125 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg-main)',
-      color: 'var(--text-primary)',
-      padding: '40px 20px',
-      fontFamily: 'var(--font-main)'
-    }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-          <div className="logo" style={{ margin: 0 }}>ORDOAXIO / HQ</div>
+    <div className="min-h-screen bg-[#040a18] text-gray-300 p-6 md:p-10 font-sans selection:bg-blue-900/50">
+      <div className="max-w-5xl mx-auto space-y-12">
+        <header className="flex justify-between items-center border-b border-gray-800 pb-6">
+          <div className="text-xl font-bold tracking-widest text-white uppercase">ORDOAXIO / HQ</div>
           <button 
             onClick={handleLogout}
-            style={{ 
-              background: 'transparent', border: '1px solid var(--card-border)', 
-              color: 'var(--text-secondary)', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' 
-            }}
+            className="px-4 py-2 border border-gray-800 text-gray-400 hover:text-white hover:border-gray-600 transition-colors text-xs tracking-widest uppercase rounded-none"
           >
             Выйти
           </button>
         </header>
 
-        <div className="section-label">Добавить проект</div>
-        <form onSubmit={handleAddProject} style={{
-          background: 'var(--card-bg)',
-          border: '1px solid var(--card-border)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '40px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr auto',
-          gap: '15px',
-          alignItems: 'end'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Client ID</label>
-            <input
-              type="text"
-              value={newClientId}
-              onChange={(e) => setNewClientId(e.target.value)}
-              placeholder="e.g. electronics_store_msk"
-              required
-              style={{
-                padding: '10px', borderRadius: '8px', border: '1px solid var(--card-border)',
-                background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', outline: 'none'
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Project URL</label>
-            <input
-              type="url"
-              value={newProjectUrl}
-              onChange={(e) => setNewProjectUrl(e.target.value)}
-              placeholder="https://"
-              required
-              style={{
-                padding: '10px', borderRadius: '8px', border: '1px solid var(--card-border)',
-                background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', outline: 'none'
-              }}
-            />
-          </div>
-          <button type="submit" disabled={isLoading} className="btn-metal" style={{ border: 'none', cursor: isLoading ? 'not-allowed' : 'pointer', padding: '10px 20px', height: '100%' }}>
-            {isLoading ? '...' : 'Добавить'}
-          </button>
-        </form>
+        <section className="space-y-6">
+          <div className="text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-800 pb-2">Добавить проект</div>
+          <form onSubmit={handleAddProject} className="bg-[#0a1224] border border-gray-800 p-6 md:p-8 flex flex-col md:flex-row gap-6 md:items-end rounded-none">
+            <div className="flex flex-col gap-2 flex-1">
+              <label className="text-xs text-gray-500 uppercase tracking-widest">Client ID</label>
+              <input
+                type="text"
+                value={newClientId}
+                onChange={(e) => setNewClientId(e.target.value)}
+                placeholder="e.g. electronics_store_msk"
+                required
+                className="px-4 py-3 bg-[#040a18] border border-gray-800 text-gray-200 outline-none focus:border-blue-500/50 transition-colors w-full rounded-none"
+              />
+            </div>
+            
+            <div className="flex flex-col gap-2 flex-1">
+              <label className="text-xs text-gray-500 uppercase tracking-widest">Тип бизнеса</label>
+              <select
+                value={newBusinessType}
+                onChange={(e) => setNewBusinessType(e.target.value)}
+                className="px-4 py-3 bg-[#040a18] border border-gray-800 text-gray-200 outline-none focus:border-blue-500/50 transition-colors w-full rounded-none appearance-none cursor-pointer"
+              >
+                <option value="ecommerce">E-commerce</option>
+                <option value="services">Услуги (Services)</option>
+              </select>
+            </div>
 
-        <div className="section-label">Активные проекты</div>
-        {isLoading && projects.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Загрузка...</p>
-        ) : projects.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Нет проектов.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {projects.map((project) => (
-              <div key={project.id} style={{
-                background: 'var(--card-bg)',
-                border: '1px solid var(--card-border)',
-                borderRadius: '12px',
-                padding: '20px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '5px' }}>{project.client_id}</h3>
-                  <a href={project.project_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontSize: '0.9rem', textDecoration: 'none', display: 'block', marginBottom: '8px' }}>
-                    {project.project_url}
-                  </a>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    background: project.status === 'pending_ingestion' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                    color: project.status === 'pending_ingestion' ? '#f59e0b' : 'var(--text-secondary)',
-                    border: project.status === 'pending_ingestion' ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid var(--card-border)'
-                  }}>
-                    {project.status || 'unknown'}
-                  </span>
+            <div className="flex flex-col gap-2 flex-1">
+              <label className="text-xs text-gray-500 uppercase tracking-widest">Project URL</label>
+              <input
+                type="url"
+                value={newProjectUrl}
+                onChange={(e) => setNewProjectUrl(e.target.value)}
+                placeholder="https://"
+                required
+                className="px-4 py-3 bg-[#040a18] border border-gray-800 text-gray-200 outline-none focus:border-blue-500/50 transition-colors w-full rounded-none"
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={isLoading} 
+              className="px-8 py-3 bg-blue-600/10 text-blue-400 border border-blue-900/50 hover:bg-blue-600/20 hover:border-blue-700 transition-all uppercase tracking-widest text-xs font-medium h-[46px] whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+            >
+              {isLoading ? 'Загрузка...' : 'Добавить'}
+            </button>
+          </form>
+        </section>
+
+        <section className="space-y-6">
+          <div className="text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-800 pb-2">Активные проекты</div>
+          
+          {isLoading && projects.length === 0 ? (
+            <p className="text-sm text-gray-500">Загрузка данных...</p>
+          ) : projects.length === 0 ? (
+            <p className="text-sm text-gray-500">Нет активных проектов.</p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {projects.map((project) => (
+                <div key={project.id} className="bg-[#0a1224] border border-gray-800 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 rounded-none">
+                  
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <a href={project.project_url} target="_blank" rel="noopener noreferrer" className="text-base text-gray-200 hover:text-white transition-colors truncate font-medium">
+                        {project.project_url}
+                      </a>
+                      <span className={`text-[10px] px-2 py-1 uppercase tracking-widest border rounded-none ${
+                        project.status === 'pending_ingestion' 
+                          ? 'bg-amber-900/20 text-amber-500 border-amber-900/50' 
+                          : 'bg-gray-800/30 text-gray-400 border-gray-800'
+                      }`}>
+                        {project.status || 'unknown'}
+                      </span>
+                      {project.business_type && (
+                        <span className="text-[10px] px-2 py-1 uppercase tracking-widest border border-blue-900/50 bg-blue-900/10 text-blue-400 rounded-none">
+                          {project.business_type}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">Client ID:</span>
+                      <code className="text-xs text-gray-400 font-mono bg-[#040a18] px-2 py-1 border border-gray-800">{project.client_id}</code>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <button 
+                      onClick={() => handleCopyScript(project.id, project.client_id)}
+                      className="flex-1 md:flex-none px-6 py-2 bg-gray-800/30 text-gray-300 border border-gray-700 hover:bg-gray-800/50 hover:text-white transition-all text-xs tracking-widest uppercase rounded-none"
+                    >
+                      {copiedId === project.id ? 'Скопировано!' : 'Копировать скрипт'}
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteProject(project.id)}
+                      disabled={isLoading}
+                      className="px-6 py-2 bg-red-900/10 text-red-500 border border-red-900/30 hover:bg-red-900/20 hover:border-red-900/50 transition-all text-xs tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </div>
-                <button 
-                  onClick={() => handleDeleteProject(project.id)}
-                  disabled={isLoading}
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    color: '#ef4444',
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  Удалить
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}

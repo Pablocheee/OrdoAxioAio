@@ -1,13 +1,9 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import * as cheerio from "cheerio";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI, Type } from "@google/genai";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 if (!getApps().length) {
   initializeApp({

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 /**
@@ -158,6 +158,20 @@ export default function MasterDashboard() {
     }
   };
 
+  /**
+   * Обработчик удаления клиента.
+   */
+  const handleDeleteClient = async (clientId: string, domain: string) => {
+    if (window.confirm("Вы уверены, что хотите удалить этот сайт и связанные с ним данные?")) {
+      try {
+        await deleteDoc(doc(db, 'clients', clientId));
+        addLog(`> Успех: Удален клиент ${domain} (ID: ${clientId})`);
+      } catch (error: any) {
+        addLog(`> Ошибка: Не удалось удалить клиента ${domain}. ${error.message}`);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-8 font-sans selection:bg-gray-300 selection:text-gray-900">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -216,12 +230,13 @@ export default function MasterDashboard() {
                 <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Проиндексировано</th>
                 <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Последнее обновление</th>
                 <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Управление (Master Switch Board)</th>
+                <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal text-right">Действия</th>
               </tr>
             </thead>
             <tbody>
               {clients.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-sm text-gray-500">Нет активных клиентов</td>
+                  <td colSpan={5} className="py-6 text-center text-sm text-gray-500">Нет активных клиентов</td>
                 </tr>
               ) : (
                 clients.map((client) => (
@@ -247,6 +262,14 @@ export default function MasterDashboard() {
                           onChange={() => handleToggleFeature(client.id, 'isAiRoutingEnabled')}
                         />
                       </div>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <button 
+                        onClick={() => handleDeleteClient(client.id, client.domain)}
+                        className="px-4 py-1.5 border border-gray-800 text-gray-500 hover:text-red-400 hover:border-red-800 transition-colors text-xs tracking-widest uppercase rounded-none"
+                      >
+                        Удалить
+                      </button>
                     </td>
                   </tr>
                 ))

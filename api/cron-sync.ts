@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { parseHtmlContent, generateContentHash } from '../src/utils/parser';
+import { parseHtmlContent, generateContentHash } from '../src/utils/parser.js';
 
 // Инициализация Firebase Admin SDK (безопасно для serverless среды Vercel)
 if (!getApps().length) {

@@ -42,9 +42,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       sourceUrl: targetUrl,
     };
     
-    res.status(200).json({ success: true, data: scrapedData });
+    return res.status(200).json({ success: true, data: scrapedData });
   } catch (error: any) {
     console.error("Ошибка парсинга (Scraping error):", error);
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 }

@@ -37,7 +37,7 @@ const db = getFirestore();
  * @param clientId Идентификатор клиента
  * @returns Массив целевых URL
  */
-async function getTargetUrlsForClient(clientId: string): Promise<string[]> {
+async function getTargetUrlsForClient(_clientId: string): Promise<string[]> {
   // Для примера возвращаем фиктивный массив адресов
   return ['https://example.com/page1', 'https://example.com/page2'];
 }
@@ -58,7 +58,7 @@ function chunkArray<T>(array: T[], size: number): T[][] {
  * Основной обработчик Cron-задачи для Vercel.
  * Выполняет фоновую синхронизацию, скачивание, парсинг и проверку обновлений контента.
  */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
     // 1. Получаем активных клиентов, у которых включен парсинг (isParserEnabled === true)
     const clientsSnapshot = await db.collection('clients')
@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ message: 'Нет активных клиентов для синхронизации.' });
     }
 
-    const results = [];
+    const results: any[] = [];
 
     // 2. Итерируемся по каждому активному клиенту
     for (const clientDoc of clientsSnapshot.docs) {
@@ -156,9 +156,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    res.status(200).json({ success: true, processed: results });
+    return res.status(200).json({ success: true, processed: results });
   } catch (error: any) {
     console.error('Критическая ошибка синхронизации (Cron):', error);
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 }

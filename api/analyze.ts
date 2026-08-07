@@ -80,12 +80,13 @@ async function generateWithRetry(systemInstruction: string, rawData: any, retrie
       throw error;
     }
   }
+  throw new Error('Превышено количество попыток запроса к Gemini API');
 }
 
 /**
  * Основной обработчик: пакетный анализ данных из catalog_items с помощью Gemini API.
  */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(_req: VercelRequest, res: VercelResponse) {
   if (!geminiApiKey) {
     return res.status(500).json({ error: 'Ключ GEMINI_API_KEY не настроен' });
   }
@@ -169,10 +170,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Применяем все успешные и пропущенные обновления за один запрос
     await batch.commit();
 
-    res.status(200).json({ success: true, processed: results.length, results });
+    return res.status(200).json({ success: true, processed: results.length, results });
 
   } catch (error: any) {
     console.error('Критическая ошибка пайплайна AI генерации:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 }

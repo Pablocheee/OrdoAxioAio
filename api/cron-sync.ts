@@ -31,15 +31,32 @@ if (!getApps().length) {
 const db = getFirestore();
 
 /**
- * Заглушка для функции получения списка целевых URL-адресов клиента.
- * В реальном приложении данные могут извлекаться из конфигурации клиента в БД или внешнего API.
+ * Получает список целевых URL-адресов клиента из Firestore.
  * 
  * @param clientId Идентификатор клиента
  * @returns Массив целевых URL
  */
-async function getTargetUrlsForClient(_clientId: string): Promise<string[]> {
-  // Для примера возвращаем фиктивный массив адресов
-  return ['https://example.com/page1', 'https://example.com/page2'];
+async function getTargetUrlsForClient(clientId: string): Promise<string[]> {
+  try {
+    const clientDoc = await db.collection('clients').doc(clientId).get();
+    
+    if (!clientDoc.exists) {
+      console.warn(`[Warning] Клиент ${clientId} не найден в базе.`);
+      return [];
+    }
+    
+    const clientData = clientDoc.data();
+    
+    // Подтягиваем массив ссылок (предполагается, что поле называется targetUrls)
+    const urls: string[] = clientData?.targetUrls || [];
+    
+    // Возвращаем только валидные ссылки, отсекая возможные пустые строки
+    return urls.filter((url: string) => typeof url === 'string' && url.startsWith('http'));
+    
+  } catch (error: any) {
+    console.error(`[Error] Ошибка при чтении ссылок для клиента ${clientId}:`, error.message);
+    return [];
+  }
 }
 
 /**

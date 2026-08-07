@@ -47,11 +47,16 @@ async function getTargetUrlsForClient(clientId: string): Promise<string[]> {
     
     const clientData = clientDoc.data();
     
-    // Подтягиваем массив ссылок (предполагается, что поле называется targetUrls)
-    const urls: string[] = clientData?.targetUrls || [];
+    // Подтягиваем строку domain из базы данных клиента
+    const domain: string = clientData?.domain || '';
     
-    // Возвращаем только валидные ссылки, отсекая возможные пустые строки
-    return urls.filter((url: string) => typeof url === 'string' && url.startsWith('http'));
+    // Проверяем, что домен существует и начинается с http, 
+    // и возвращаем его в виде массива (так как наш парсер ожидает массив ссылок)
+    if (typeof domain === 'string' && domain.startsWith('http')) {
+      return [domain];
+    }
+    
+    return []; // Если домен пустой или кривой, возвращаем пустоту
     
   } catch (error: any) {
     console.error(`[Error] Ошибка при чтении ссылок для клиента ${clientId}:`, error.message);

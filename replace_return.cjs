@@ -1,173 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { db } from './firebase';
+const fs = require('fs');
 
-/**
- * Типы бизнеса для клиентских сайтов.
- */
-type BusinessType = 'ecommerce' | 'services';
+const content = fs.readFileSync('src/MasterDashboard.tsx', 'utf8');
 
-/**
- * Интерфейс управления фичами клиента (Master Switch Board).
- */
-interface ClientFeatureToggles {
-  isParserEnabled: boolean;
-  isAiGenerationEnabled: boolean;
-  isAiRoutingEnabled: boolean;
-  isFastIndexingEnabled: boolean;
-}
+const returnRegex = /  return \([\s\S]*?\);\n}/;
 
-/**
- * Интерфейс данных клиента.
- */
-interface ClientInfo {
-  id: string;
-  domain: string;
-  businessType: BusinessType;
-  indexedPages: number;
-  lastUpdate: string;
-  features: ClientFeatureToggles;
-}
-
-/**
- * Строгий, минималистичный компонент переключателя (Toggle).
- * Реализован без скруглений и теней для соответствия плоскому дизайну.
- */
-function MinimalToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
-  return (
-    <label className="flex items-center space-x-2 cursor-pointer group">
-      <div className="relative w-8 h-4">
-        <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
-        <div className={`absolute inset-0 border transition-colors ${checked ? 'bg-gray-300 border-gray-300' : 'bg-gray-900 border-gray-600'}`}></div>
-        <div className={`absolute left-0.5 top-0.5 w-3 h-3 transition-transform ${checked ? 'translate-x-4 bg-gray-900' : 'translate-x-0 bg-gray-500 group-hover:bg-gray-400'}`}></div>
-      </div>
-      <span className="text-xs uppercase tracking-wider text-gray-400 group-hover:text-gray-200 select-none">{label}</span>
-    </label>
-  );
-}
-
-/**
- * Главный дашборд управления AIO (AI Search Optimization).
- */
-export default function MasterDashboard() {
-  // Реальные данные клиентов из Firestore
-  const [clients, setClients] = useState<ClientInfo[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // Состояние формы регистрации
-  const [urlInput, setUrlInput] = useState('');
-  const [businessTypeInput, setBusinessTypeInput] = useState<BusinessType>('ecommerce');
-  
-  // Состояние логов
-  const [logs, setLogs] = useState<string[]>([]);
-  const endOfLogsRef = useRef<HTMLDivElement>(null);
-
-  // Функция добавления логов
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString('ru-RU');
-    setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
-  };
-
-  // Автоскролл логов
-  useEffect(() => {
-    endOfLogsRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [logs]);
-
-  // Подписка на коллекцию clients
-  useEffect(() => {
-    const clientsRef = collection(db, 'clients');
-    const unsubscribe = onSnapshot(clientsRef, (snapshot) => {
-      const clientsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as ClientInfo[];
-      setClients(clientsData);
-      
-      const timestamp = new Date().toLocaleTimeString('ru-RU');
-      setLogs(prev => [...prev, `[${timestamp}] > Данные клиентов обновлены из базы (${clientsData.length} записей).`]);
-    }, (error) => {
-      const timestamp = new Date().toLocaleTimeString('ru-RU');
-      setLogs(prev => [...prev, `[${timestamp}] > Ошибка подписки на клиентов: ${error.message}`]);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  /**
-   * Обработчик добавления нового клиента в Firestore.
-   */
-  const handleAddClient = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!urlInput.trim()) return;
-
-    try {
-      const newClientData = {
-        domain: urlInput.trim(),
-        businessType: businessTypeInput,
-        indexedPages: 0,
-        lastUpdate: new Date().toISOString().slice(0, 16).replace('T', ' '),
-        features: {
-          isParserEnabled: false,
-          isAiGenerationEnabled: false,
-          isAiRoutingEnabled: false,
-          isFastIndexingEnabled: false,
-        }
-      };
-
-      const docRef = await addDoc(collection(db, 'clients'), newClientData);
-      addLog(`> Успех: Зарегистрирован клиент ${newClientData.domain} (ID: ${docRef.id})`);
-      setUrlInput('');
-    } catch (error: any) {
-      addLog(`> Ошибка: Не удалось добавить клиента. ${error.message}`);
-    }
-  };
-
-  /**
-   * Обработчик переключения тумблеров в Firestore.
-   */
-  const handleToggleFeature = async (clientId: string, featureKey: keyof ClientFeatureToggles) => {
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return;
-
-    const newValue = !client.features[featureKey];
-    
-    try {
-      const clientRef = doc(db, 'clients', clientId);
-      await updateDoc(clientRef, {
-        [`features.${featureKey}`]: newValue
-      });
-      addLog(`> Успех: ${client.domain} -> ${featureKey} переведен в ${newValue ? 'ВКЛ' : 'ВЫКЛ'}`);
-    } catch (error: any) {
-      addLog(`> Ошибка: Не удалось обновить статус фичи для ${client.domain}. ${error.message}`);
-    }
-  };
-
-  /**
-   * Обработчик удаления клиента.
-   */
-  const handleDeleteClient = async (clientId: string, domain: string) => {
-    if (window.confirm("Вы уверены, что хотите удалить этот сайт и связанные с ним данные?")) {
-      try {
-        await deleteDoc(doc(db, 'clients', clientId));
-        if (selectedClientId === clientId) setSelectedClientId(null);
-        addLog(`> Успех: Удален клиент ${domain} (ID: ${clientId})`);
-      } catch (error: any) {
-        addLog(`> Ошибка: Не удалось удалить клиента ${domain}. ${error.message}`);
-      }
-    }
-  };
-
-  const handleCopyId = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const selectedClient = clients.find(c => c.id === selectedClientId);
-
-  return (
+const newReturn = `  return (
     <div className="min-h-screen bg-[#040a18] text-gray-200 p-8 font-sans selection:bg-gray-300 selection:text-gray-900">
       <div className="max-w-7xl mx-auto">
         
@@ -267,13 +104,13 @@ export default function MasterDashboard() {
                       <tr 
                         key={client.id} 
                         onClick={() => setSelectedClientId(client.id)}
-                        className={`border-b border-gray-800/50 hover:bg-gray-800/50 cursor-pointer transition-colors ${selectedClientId === client.id ? 'bg-gray-800/80' : ''}`}
+                        className={\`border-b border-gray-800/50 hover:bg-gray-800/50 cursor-pointer transition-colors \${selectedClientId === client.id ? 'bg-gray-800/80' : ''}\`}
                       >
                         <td className="py-4 px-4 text-sm text-gray-200">
                           <div className="font-medium text-white">{client.domain}</div>
                           <div 
                             onClick={(e) => handleCopyId(e, client.id)}
-                            className={`text-xs font-mono mt-1 cursor-pointer transition-colors ${copiedId === client.id ? 'text-green-400' : 'text-gray-500 hover:text-gray-300'}`}
+                            className={\`text-xs font-mono mt-1 cursor-pointer transition-colors \${copiedId === client.id ? 'text-green-400' : 'text-gray-500 hover:text-gray-300'}\`}
                             title="Скопировать ID"
                           >
                             {copiedId === client.id ? 'Скопировано!' : client.id}
@@ -339,4 +176,8 @@ export default function MasterDashboard() {
       </div>
     </div>
   );
-}
+}`;
+
+const replacedContent = content.replace(returnRegex, newReturn);
+fs.writeFileSync('src/MasterDashboard.tsx', replacedContent);
+console.log('Done');

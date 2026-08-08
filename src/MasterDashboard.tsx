@@ -123,6 +123,19 @@ export default function MasterDashboard() {
       };
 
       const docRef = await addDoc(collection(db, 'clients'), newClientData);
+      
+      fetch('/api/update-kv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: docRef.id,
+          payload: {
+            domain: newClientData.domain,
+            features: newClientData.features
+          }
+        })
+      }).catch(err => console.error("Redis sync failed:", err));
+
       addLog(`> Успех: Зарегистрирован клиент ${newClientData.domain} (ID: ${docRef.id})`);
       setUrlInput('');
     } catch (error: any) {
@@ -144,6 +157,20 @@ export default function MasterDashboard() {
       await updateDoc(clientRef, {
         [`features.${featureKey}`]: newValue
       });
+
+      const updatedFeatures = { ...client.features, [featureKey]: newValue };
+      fetch('/api/update-kv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: clientId,
+          payload: {
+            domain: client.domain,
+            features: updatedFeatures
+          }
+        })
+      }).catch(err => console.error("Redis sync failed:", err));
+
       addLog(`> Успех: ${client.domain} -> ${featureKey} переведен в ${newValue ? 'ВКЛ' : 'ВЫКЛ'}`);
     } catch (error: any) {
       addLog(`> Ошибка: Не удалось обновить статус фичи для ${client.domain}. ${error.message}`);

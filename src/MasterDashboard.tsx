@@ -83,23 +83,10 @@ export default function MasterDashboard() {
   useEffect(() => {
     const clientsRef = collection(db, 'clients');
     const unsubscribe = onSnapshot(clientsRef, (snapshot) => {
-      const clientsData: ClientInfo[] = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        clientsData.push({
-          id: docSnap.id,
-          domain: data.domain || '',
-          businessType: data.businessType || 'ecommerce',
-          indexedPages: data.indexedPages || 0,
-          lastUpdate: data.lastUpdate || '',
-          features: {
-            isParserEnabled: data.features?.isParserEnabled || false,
-            isAiGenerationEnabled: data.features?.isAiGenerationEnabled || false,
-            isAiRoutingEnabled: data.features?.isAiRoutingEnabled || false,
-            isFastIndexingEnabled: data.features?.isFastIndexingEnabled || false,
-          }
-        });
-      });
+      const clientsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ClientInfo[];
       setClients(clientsData);
       
       const timestamp = new Date().toLocaleTimeString('ru-RU');
@@ -134,6 +121,7 @@ export default function MasterDashboard() {
       };
 
       const docRef = await addDoc(collection(db, 'clients'), newClientData);
+      setClients(prev => [...prev, { ...newClientData, id: docRef.id }]);
       addLog(`> Успех: Зарегистрирован клиент ${newClientData.domain} (ID: ${docRef.id})`);
       setUrlInput('');
     } catch (error: any) {

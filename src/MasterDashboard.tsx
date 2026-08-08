@@ -27,6 +27,7 @@ interface ClientInfo {
   indexedPages: number;
   lastUpdate: string;
   features: ClientFeatureToggles;
+  jsonLd?: string;
 }
 
 /**
@@ -54,6 +55,7 @@ export default function MasterDashboard() {
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [jsonLdInput, setJsonLdInput] = useState<string>('');
 
   // Состояние формы регистрации
   const [urlInput, setUrlInput] = useState('');
@@ -201,6 +203,41 @@ export default function MasterDashboard() {
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
+  useEffect(() => {
+    setJsonLdInput(selectedClient?.jsonLd || '');
+  }, [selectedClientId, selectedClient?.jsonLd]);
+
+  /**
+   * Обработчик сохранения JSON-LD разметки.
+   */
+  const handleSaveJsonLd = async () => {
+    if (!selectedClient) return;
+    
+    try {
+      const clientRef = doc(db, 'clients', selectedClient.id);
+      await updateDoc(clientRef, {
+        jsonLd: jsonLdInput
+      });
+
+      fetch('/api/update-kv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: selectedClient.id,
+          payload: {
+            domain: selectedClient.domain,
+            features: selectedClient.features,
+            jsonLd: jsonLdInput
+          }
+        })
+      }).catch(err => console.error("Redis sync failed:", err));
+
+      addLog(`> Успех: JSON-LD сохранен для ${selectedClient.domain}`);
+    } catch (error: any) {
+      addLog(`> Ошибка: Не удалось сохранить JSON-LD для ${selectedClient.domain}. ${error.message}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#040a18] text-gray-100 p-8 font-sans selection:bg-gray-300 selection:text-gray-900">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -329,6 +366,22 @@ export default function MasterDashboard() {
                   checked={selectedClient.features.isFastIndexingEnabled}
                   onChange={() => handleToggleFeature(selectedClient.id, 'isFastIndexingEnabled')}
                 />
+              </div>
+              <div className="mt-8 border-t border-gray-800 pt-6">
+                <label className="block text-xs uppercase tracking-wider text-gray-500 mb-3">AI Оптимизированные данные (JSON-LD)</label>
+                <textarea
+                  value={jsonLdInput}
+                  onChange={(e) => setJsonLdInput(e.target.value)}
+                  placeholder="Вставьте сгенерированный JSON-LD код здесь..."
+                  className="w-full h-48 bg-[#040a18] border border-gray-800 text-gray-300 p-4 font-mono text-xs focus:outline-none focus:border-gray-600 transition-colors rounded-none resize-y"
+                  spellCheck={false}
+                />
+                <button
+                  onClick={handleSaveJsonLd}
+                  className="mt-4 px-6 py-2 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-700 transition-colors text-xs uppercase tracking-widest rounded-none font-medium"
+                >
+                  Сохранить JSON-LD
+                </button>
               </div>
             </div>
           ) : (

@@ -121,7 +121,6 @@ export default function MasterDashboard() {
       };
 
       const docRef = await addDoc(collection(db, 'clients'), newClientData);
-      setClients(prev => [...prev, { ...newClientData, id: docRef.id }]);
       addLog(`> Успех: Зарегистрирован клиент ${newClientData.domain} (ID: ${docRef.id})`);
       setUrlInput('');
     } catch (error: any) {
@@ -232,7 +231,10 @@ export default function MasterDashboard() {
               ) : (
                 clients.map((client) => (
                   <tr key={client.id} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors">
-                    <td className="py-4 px-4 text-sm text-gray-200">{client.domain}</td>
+                    <td className="py-4 px-4 text-sm text-gray-200">
+                      <div>{client.domain}</div>
+                      <div className="text-xs font-mono text-gray-500 mt-1">{client.id}</div>
+                    </td>
                     <td className="py-4 px-4 text-sm text-gray-400">{client.indexedPages.toLocaleString('ru-RU')} стр.</td>
                     <td className="py-4 px-4 text-sm text-gray-400">{client.lastUpdate}</td>
                     <td className="py-4 px-4">

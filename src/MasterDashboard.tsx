@@ -58,18 +58,25 @@ export default function MasterDashboard() {
   // Состояние формы регистрации
   const [urlInput, setUrlInput] = useState('');
   const [businessTypeInput, setBusinessTypeInput] = useState<BusinessType>('ecommerce');
+
+  // Состояние логов консоли
+  const [logs, setLogs] = useState<string[]>([
+    '> Система AIO Master инициализирована.',
+    '> Подключение к Firebase Firestore установлено.',
+    '> Ожидание команд...'
+  ]);
   
-  // Состояние логов
-  const [logs, setLogs] = useState<string[]>([]);
   const endOfLogsRef = useRef<HTMLDivElement>(null);
 
-  // Функция добавления логов
+  /**
+   * Добавление новой записи в лог терминала.
+   */
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString('ru-RU');
     setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
   };
 
-  // Автоскролл логов
+  // Автоскролл консоли при добавлении новых логов
   useEffect(() => {
     endOfLogsRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
@@ -168,174 +175,163 @@ export default function MasterDashboard() {
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
   return (
-    <div className="min-h-screen bg-[#040a18] text-gray-200 p-8 font-sans selection:bg-gray-300 selection:text-gray-900">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#040a18] text-gray-100 p-8 font-sans selection:bg-gray-300 selection:text-gray-900">
+      <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Заголовок */}
-        <header className="mb-8">
+        <header className="border-b border-gray-700 pb-4">
           <h1 className="text-2xl font-normal tracking-wide uppercase text-gray-200">AIO Master Dashboard</h1>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Левая колонка */}
-          <div className="lg:col-span-1 space-y-6">
+        {/* Форма добавления (Onboarding Form) */}
+        <section className="bg-[#0a1224] border border-gray-800 p-4 rounded-sm">
+          <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-6">Регистрация нового клиента</h2>
+          <form onSubmit={handleAddClient} className="flex flex-col md:flex-row items-end gap-4">
+            <div className="flex flex-col space-y-2 w-full md:w-1/3">
+              <label htmlFor="domain" className="text-xs uppercase tracking-wider text-gray-500">URL сайта (Домен)</label>
+              <input
+                id="domain"
+                type="text"
+                placeholder="example.com"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                className="w-full bg-gray-900 border border-gray-700 text-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-colors rounded-none"
+                required
+              />
+            </div>
             
-            {/* Форма добавления (Onboarding Form) */}
-            <section className="bg-[#0a1224] border border-gray-800 rounded-xl p-6">
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-6">Регистрация нового клиента</h2>
-              <form onSubmit={handleAddClient} className="flex flex-col space-y-4">
-                <div className="flex flex-col space-y-2">
-                  <label htmlFor="domain" className="text-xs uppercase tracking-wider text-gray-500">URL сайта (Домен)</label>
-                  <input
-                    id="domain"
-                    type="text"
-                    placeholder="example.com"
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    className="w-full bg-[#040a18] border border-gray-700 text-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-colors rounded"
-                    required
-                  />
-                </div>
-                
-                <div className="flex flex-col space-y-2">
-                  <label htmlFor="businessType" className="text-xs uppercase tracking-wider text-gray-500">Тип бизнеса</label>
-                  <select
-                    id="businessType"
-                    value={businessTypeInput}
-                    onChange={(e) => setBusinessTypeInput(e.target.value as BusinessType)}
-                    className="w-full bg-[#040a18] border border-gray-700 text-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-colors rounded appearance-none"
-                  >
-                    <option value="ecommerce">Электронная коммерция (E-commerce)</option>
-                    <option value="services">Услуги (Services)</option>
-                  </select>
-                </div>
+            <div className="flex flex-col space-y-2 w-full md:w-1/3">
+              <label htmlFor="businessType" className="text-xs uppercase tracking-wider text-gray-500">Тип бизнеса</label>
+              <select
+                id="businessType"
+                value={businessTypeInput}
+                onChange={(e) => setBusinessTypeInput(e.target.value as BusinessType)}
+                className="w-full bg-gray-900 border border-gray-700 text-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-colors rounded-none appearance-none"
+              >
+                <option value="ecommerce">Электронная коммерция (E-commerce)</option>
+                <option value="services">Услуги (Services)</option>
+              </select>
+            </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm uppercase tracking-wider transition-colors focus:outline-none rounded font-medium mt-2"
-                >
-                  Добавить проект
-                </button>
-              </form>
-            </section>
+            <button
+              type="submit"
+              className="w-full md:w-auto bg-gray-200 text-gray-900 border border-gray-200 px-6 py-2 text-sm uppercase tracking-wider hover:bg-white transition-colors focus:outline-none rounded-none font-medium"
+            >
+              Добавить проект
+            </button>
+          </form>
+        </section>
 
-            {/* Консоль */}
-            <section className="bg-[#0a1224] border border-gray-800 rounded-xl p-6 flex flex-col">
-              <div className="border-b border-gray-800 pb-3 mb-3 flex items-center justify-between">
-                <h2 className="text-xs uppercase tracking-widest text-gray-500">Системный журнал</h2>
-                <div className="flex space-x-2">
-                  <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                  <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                </div>
-              </div>
-              <div className="max-h-48 overflow-y-auto font-mono text-xs flex flex-col space-y-1 pr-2 text-green-400">
-                {logs.map((log, index) => (
-                  <div key={index} className="break-words">
-                    {log}
-                  </div>
-                ))}
-                <div ref={endOfLogsRef} />
-              </div>
-            </section>
-
-          </div>
-
-          {/* Правая колонка */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* Таблица клиентов */}
-            <section className="bg-[#0a1224] border border-gray-800 rounded-xl p-6 overflow-x-auto">
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-6">Управление клиентами</h2>
-              <table className="w-full text-left border-collapse min-w-max">
-                <thead>
-                  <tr className="border-b border-gray-800">
-                    <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Домен</th>
-                    <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Проиндексировано</th>
-                    <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Последнее обновление</th>
-                    <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal text-right">Действия</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {clients.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-6 text-center text-sm text-gray-500">Нет активных клиентов</td>
-                    </tr>
-                  ) : (
-                    clients.map((client) => (
-                      <tr 
-                        key={client.id} 
-                        onClick={() => setSelectedClientId(client.id)}
-                        className={`border-b border-gray-800/50 hover:bg-gray-800/50 cursor-pointer transition-colors ${selectedClientId === client.id ? 'bg-gray-800/80' : ''}`}
-                      >
-                        <td className="py-4 px-4 text-sm text-gray-200">
-                          <div className="font-medium text-white">{client.domain}</div>
-                          <div 
-                            onClick={(e) => handleCopyId(e, client.id)}
-                            className={`text-xs font-mono mt-1 cursor-pointer transition-colors ${copiedId === client.id ? 'text-green-400' : 'text-gray-500 hover:text-gray-300'}`}
-                            title="Скопировать ID"
-                          >
-                            {copiedId === client.id ? 'Скопировано!' : client.id}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-sm text-gray-400">{client.indexedPages.toLocaleString('ru-RU')} стр.</td>
-                        <td className="py-4 px-4 text-sm text-gray-400">{client.lastUpdate}</td>
-                        <td className="py-4 px-4 text-right">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteClient(client.id, client.domain); }}
-                            className="px-3 py-1.5 border border-gray-700 text-gray-400 hover:text-red-400 hover:border-red-800 hover:bg-red-900/20 transition-all text-xs tracking-widest uppercase rounded"
-                          >
-                            Удалить
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </section>
-
-            {/* Панель управления выбранным клиентом */}
-            <section className="bg-[#0a1224] border border-gray-800 rounded-xl p-6">
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-6">Управление фичами (Master Switch Board)</h2>
-              {selectedClient ? (
-                <div>
-                  <div className="mb-6 text-sm text-gray-400">
-                    Выбран клиент: <span className="font-medium text-white ml-2">{selectedClient.domain}</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <MinimalToggle
-                      label="Парсинг (Parser)"
-                      checked={selectedClient.features.isParserEnabled}
-                      onChange={() => handleToggleFeature(selectedClient.id, 'isParserEnabled')}
-                    />
-                    <MinimalToggle
-                      label="Генерация ИИ (AI Gen)"
-                      checked={selectedClient.features.isAiGenerationEnabled}
-                      onChange={() => handleToggleFeature(selectedClient.id, 'isAiGenerationEnabled')}
-                    />
-                    <MinimalToggle
-                      label="ИИ Маршрутизация (AI Routing)"
-                      checked={selectedClient.features.isAiRoutingEnabled}
-                      onChange={() => handleToggleFeature(selectedClient.id, 'isAiRoutingEnabled')}
-                    />
-                    <MinimalToggle
-                      label="Быстрая индексация (IndexNow)"
-                      checked={selectedClient.features.isFastIndexingEnabled}
-                      onChange={() => handleToggleFeature(selectedClient.id, 'isFastIndexingEnabled')}
-                    />
-                  </div>
-                </div>
+        {/* Таблица клиентов */}
+        <section className="bg-[#0a1224] border border-gray-800 p-4 rounded-sm overflow-x-auto">
+          <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-6">Управление клиентами</h2>
+          <table className="w-full text-left border-collapse min-w-max">
+            <thead>
+              <tr className="border-b border-gray-700">
+                <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Домен</th>
+                <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Проиндексировано</th>
+                <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal">Последнее обновление</th>
+                <th className="py-3 px-4 text-xs uppercase tracking-wider text-gray-500 font-normal text-right">Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clients.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-sm text-gray-500">Нет активных клиентов</td>
+                </tr>
               ) : (
-                <div className="py-8 text-center text-sm text-gray-500">
-                  Выберите сайт из списка для управления
-                </div>
+                clients.map((client) => (
+                  <tr 
+                    key={client.id} 
+                    onClick={() => setSelectedClientId(client.id)}
+                    className={`border-b border-gray-800/50 hover:bg-gray-800/50 cursor-pointer transition-colors ${selectedClientId === client.id ? 'bg-gray-800/50' : ''}`}
+                  >
+                    <td className="py-4 px-4 text-sm text-gray-200">
+                      <div>{client.domain}</div>
+                      <div 
+                        onClick={(e) => handleCopyId(e, client.id)}
+                        className={`text-xs font-mono mt-1 cursor-pointer transition-colors ${copiedId === client.id ? 'text-green-400' : 'text-gray-500 hover:text-gray-300'}`}
+                        title="Скопировать ID"
+                      >
+                        {copiedId === client.id ? 'Скопировано!' : client.id}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-sm text-gray-400">{client.indexedPages.toLocaleString('ru-RU')} стр.</td>
+                    <td className="py-4 px-4 text-sm text-gray-400">{client.lastUpdate}</td>
+                    <td className="py-4 px-4 text-right">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteClient(client.id, client.domain); }}
+                        className="px-4 py-1.5 border border-gray-800 text-gray-500 hover:text-red-400 hover:border-red-800 transition-colors text-xs tracking-widest uppercase rounded-none"
+                      >
+                        Удалить
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
-            </section>
+            </tbody>
+          </table>
+        </section>
 
+        {/* Панель управления выбранным клиентом */}
+        <section className="bg-[#0a1224] border border-gray-800 p-4 rounded-sm">
+          <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-6">Управление фичами (Master Switch Board)</h2>
+          {selectedClient ? (
+            <div>
+              <div className="mb-6 text-sm text-gray-300">
+                Выбран клиент: <span className="font-medium text-white">{selectedClient.domain}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-8">
+                <MinimalToggle
+                  label="Парсинг (Parser)"
+                  checked={selectedClient.features.isParserEnabled}
+                  onChange={() => handleToggleFeature(selectedClient.id, 'isParserEnabled')}
+                />
+                <MinimalToggle
+                  label="Генерация ИИ (AI Gen)"
+                  checked={selectedClient.features.isAiGenerationEnabled}
+                  onChange={() => handleToggleFeature(selectedClient.id, 'isAiGenerationEnabled')}
+                />
+                <MinimalToggle
+                  label="ИИ Маршрутизация (AI Routing)"
+                  checked={selectedClient.features.isAiRoutingEnabled}
+                  onChange={() => handleToggleFeature(selectedClient.id, 'isAiRoutingEnabled')}
+                />
+                <MinimalToggle
+                  label="Быстрая индексация (IndexNow)"
+                  checked={selectedClient.features.isFastIndexingEnabled}
+                  onChange={() => handleToggleFeature(selectedClient.id, 'isFastIndexingEnabled')}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-sm text-gray-500">
+              Выберите сайт из списка для управления
+            </div>
+          )}
+        </section>
+
+        {/* Консоль */}
+        <section className="bg-[#0a1224] border border-gray-800 p-4 rounded-sm flex flex-col">
+          <div className="border-b border-gray-800 pb-3 mb-3 flex items-center justify-between">
+            <h2 className="text-xs uppercase tracking-widest text-gray-500">Системный журнал (Action Log Console)</h2>
+            <div className="flex space-x-2">
+              {/* Декоративные "лампочки" терминала в плоском стиле */}
+              <div className="w-2 h-2 bg-gray-600 rounded-sm"></div>
+              <div className="w-2 h-2 bg-gray-600 rounded-sm"></div>
+              <div className="w-2 h-2 bg-gray-400 rounded-sm"></div>
+            </div>
           </div>
-        </div>
+          <div className="max-h-48 overflow-y-auto font-mono text-xs flex flex-col space-y-1 pr-2">
+            {logs.map((log, index) => (
+              <div key={index} className="text-gray-400 break-words">
+                {log}
+              </div>
+            ))}
+            <div ref={endOfLogsRef} />
+          </div>
+        </section>
+
       </div>
     </div>
   );
